@@ -1,2 +1,3 @@
 invisible_ink
-drawings/*.offsets
+offsets/*.offsets
+drawings/*.png

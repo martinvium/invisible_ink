@@ -3,6 +3,8 @@ $(document).ready(function() {
   var draw = false;
 
   $('.canvas').mousedown(function() {
+    var id = Math.random().toString(36).substr(2, 9);
+    ws.send('STARTDRAW: ' + id);
     draw = true;
   });
 
