@@ -33,8 +33,6 @@ func (self *OffsetWriter) write(x string, y string) {
   ix, _ := strconv.ParseInt(x, 10, 32)
   iy, _ := strconv.ParseInt(y, 10, 32)
 
-  fmt.Printf("Args: %s, %s, %d, %d\n", uuid, self.drawing_id, int(ix), int(iy))
-
   if err := self.session.Query(`INSERT INTO coordinates (id, drawing_id, x, y) VALUES (?, ?, ?, ?)`,
       uuid, self.drawing_id, int(ix), int(iy)).Exec(); err != nil {
       panic(err)

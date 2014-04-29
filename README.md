@@ -9,7 +9,8 @@ renders the coordinates as dots in a PNG.
 Installation
 ------------
 
-    create table coordinates (coordinate_id int primary key, drawing_id text, x int, y int); 
+    create table coordinates (id uuid primary key, drawing_id text, x int, y int); 
+    create index on coordinates (drawing_id);
 
 Build and Run
 -------------

@@ -8,11 +8,8 @@ import (
   "image" 
   "image/color" 
   "errors"
-  "io/ioutil"
   "os"
   "regexp"
-  "strings"
-  "strconv"
   "image/png"
   "github.com/gocql/gocql"
 )
@@ -36,31 +33,22 @@ func getDrawingId(w http.ResponseWriter, r *http.Request) (string, error) {
     return m[1], nil // The title is the second subexpression.
 }
 
-func drawingAction(w http.ResponseWriter, r *http.Request) {
+func drawingAction(w http.ResponseWriter, r *http.Request, session *gocql.Session) {
     id, err := getDrawingId(w, r)
     if err != nil {
         return
     }
 
-    offsetsData, err := ioutil.ReadFile("offsets/" + id + ".offsets")
-    if err != nil {
-        http.NotFound(w, r)
-        errors.New("Drawing not found")
-    }
-
     canvas := image.NewRGBA(image.Rect(0, 0, 300, 300))
 
-    offsets := strings.Split(string(offsetsData), "\n")
-    for _, offset := range offsets {
-        xy := strings.SplitN(offset, ",", 2)
-        if xy[0] == "" || xy[1] == "" {
-            fmt.Printf("Split failed: %s\n", offset)
-            continue
-        }
+    var x, y int;
+    iter := session.Query(`SELECT x, y FROM coordinates WHERE drawing_id = ?`, id).Iter()
+    for iter.Scan(&x, &y) {
+        canvas.Set(x, y, color.Black)
+    }
 
-        x, _ := strconv.ParseInt(xy[0], 10, 32)
-        y, _ := strconv.ParseInt(xy[1], 10, 32)
-        canvas.Set(int(x), int(y), color.Black)
+    if err := iter.Close(); err != nil {
+        panic(err)
     }
 
     file, err := os.Create("drawings/" + id + ".png")
@@ -109,10 +97,14 @@ func main() {
     session := getCassandraSession()
     defer session.Close()
 
-    http.HandleFunc("/drawing/", drawingAction)
+    http.HandleFunc("/drawing/", func(w http.ResponseWriter, r *http.Request) {
+        drawingAction(w, r, session)
+    })
+
     http.Handle("/save", websocket.Handler(func(ws *websocket.Conn) {
         saveListener(ws, session)
     }))
+
     http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
     http.Handle("/drawings/", http.StripPrefix("/drawings/", http.FileServer(http.Dir("drawings"))))
     http.HandleFunc("/", showAction)
