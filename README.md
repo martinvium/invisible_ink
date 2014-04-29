@@ -6,6 +6,11 @@ renders the coordinates as dots in a PNG.
 
 ![Example](/assets/images/example.png?raw=true)
 
+Installation
+------------
+
+    create table coordinates (coordinate_id int primary key, drawing_id text, x int, y int); 
+
 Build and Run
 -------------
 

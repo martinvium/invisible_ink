@@ -2,51 +2,48 @@ package main
 
 import (
   "fmt"
-  "os"
-  "bufio"
   "regexp"
+  "github.com/gocql/gocql"
+  "strconv"
 )
 
 var startRegex = regexp.MustCompile("^STARTDRAW: ([a-zA-Z0-9]+)$")
-var offsetRegex = regexp.MustCompile("^[0-9]+,[0-9]+$")
+var offsetRegex = regexp.MustCompile("^([0-9]+),([0-9]+)$")
 
 type OffsetWriter struct {
-  file *os.File
-  buffer *bufio.Writer
+  session *gocql.Session
+  drawing_id string
+}
+
+func NewOffsetWriter(session *gocql.Session) *OffsetWriter {
+  f := OffsetWriter{session, ""}
+  return &f
 }
 
 func (self *OffsetWriter) start(id string) {
-  file, err := os.Create("offsets/" + id + ".offsets")
-  if err != nil {
-      panic(err)
-  }
-
-  self.buffer = bufio.NewWriter(file)
-  self.file = file
+  self.drawing_id = id
 }
 
 func (self *OffsetWriter) end() {
-
-  if self.buffer != nil {
-    self.buffer.Flush()
-  }
-
-  if self.file != nil {
-    self.file.Close()
-  }
+  self.drawing_id = ""
 }
 
-func (self *OffsetWriter) write(msg string) {
-  if self.buffer != nil {
-    self.buffer.WriteString(msg + "\n")
-  } else {
-    fmt.Print("Failed to write msg - drawing not started")
+func (self *OffsetWriter) write(x string, y string) {
+  uuid := gocql.TimeUUID()
+  ix, _ := strconv.ParseInt(x, 10, 32)
+  iy, _ := strconv.ParseInt(y, 10, 32)
+
+  fmt.Printf("Args: %s, %s, %d, %d\n", uuid, self.drawing_id, int(ix), int(iy))
+
+  if err := self.session.Query(`INSERT INTO coordinates (id, drawing_id, x, y) VALUES (?, ?, ?, ?)`,
+      uuid, self.drawing_id, int(ix), int(iy)).Exec(); err != nil {
+      panic(err)
   }
 }
 
 func (self *OffsetWriter) push(msg string) {
   if m := offsetRegex.FindStringSubmatch(msg); m != nil {
-    self.write(msg)
+    self.write(m[1], m[2])
   } else if m := startRegex.FindStringSubmatch(msg); m != nil {
     self.start(m[1])
   } else if msg == "ENDDRAW" {

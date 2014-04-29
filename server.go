@@ -14,6 +14,7 @@ import (
   "strings"
   "strconv"
   "image/png"
+  "github.com/gocql/gocql"
 )
 
 var templates = template.Must(template.ParseFiles("show.html"))
@@ -74,8 +75,8 @@ func drawingAction(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/drawings/"+id+".png", http.StatusFound)
 }
 
-func saveListener(ws *websocket.Conn) {
-    writer := new(OffsetWriter)
+func saveListener(ws *websocket.Conn, session *gocql.Session) {
+    writer := NewOffsetWriter(session)
 
     for {
         var in []byte
@@ -92,9 +93,26 @@ func saveListener(ws *websocket.Conn) {
     writer.end()
 }
 
+func getCassandraSession() *gocql.Session {
+    cluster := gocql.NewCluster("127.0.0.1")
+    cluster.Keyspace = "mykeyspace"
+    cluster.Consistency = gocql.Quorum
+    session, err := cluster.CreateSession()
+    if err != nil {
+        panic(err)
+    }
+
+    return session
+}
+
 func main() {
+    session := getCassandraSession()
+    defer session.Close()
+
     http.HandleFunc("/drawing/", drawingAction)
-    http.Handle("/save", websocket.Handler(saveListener))
+    http.Handle("/save", websocket.Handler(func(ws *websocket.Conn) {
+        saveListener(ws, session)
+    }))
     http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
     http.Handle("/drawings/", http.StripPrefix("/drawings/", http.FileServer(http.Dir("drawings"))))
     http.HandleFunc("/", showAction)
