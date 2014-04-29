@@ -5,10 +5,19 @@ import (
   "html/template"
   "net/http"
   "code.google.com/p/go.net/websocket"
-  "time"
+  "image" 
+  "image/color" 
+  "errors"
+  "io/ioutil"
+  "os"
+  "regexp"
+  "strings"
+  "strconv"
+  "image/png"
 )
 
 var templates = template.Must(template.ParseFiles("show.html"))
+var validDrawingPath = regexp.MustCompile("^/drawing/([a-zA-Z0-9]+)$")
 
 func showAction(w http.ResponseWriter, r *http.Request) {
     err := templates.ExecuteTemplate(w, "show.html", nil)
@@ -17,13 +26,52 @@ func showAction(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func drawingAction(w http.ResponseWriter, r *http.Request) {
-    
+func getDrawingId(w http.ResponseWriter, r *http.Request) (string, error) {
+    m := validDrawingPath.FindStringSubmatch(r.URL.Path)
+    if m == nil {
+        http.NotFound(w, r)
+        return "", errors.New("Invalid drawing id")
+    }
+    return m[1], nil // The title is the second subexpression.
 }
 
-func drawingFilename() string {
-    now := time.Now().UTC()
-    return "offsets/" + now.Format("20060102150405") + ".offsets"
+func drawingAction(w http.ResponseWriter, r *http.Request) {
+    id, err := getDrawingId(w, r)
+    if err != nil {
+        return
+    }
+
+    offsetsData, err := ioutil.ReadFile("offsets/" + id + ".offsets")
+    if err != nil {
+        http.NotFound(w, r)
+        errors.New("Drawing not found")
+    }
+
+    canvas := image.NewRGBA(image.Rect(0, 0, 300, 300))
+
+    offsets := strings.Split(string(offsetsData), "\n")
+    for _, offset := range offsets {
+        xy := strings.SplitN(offset, ",", 2)
+        if xy[0] == "" || xy[1] == "" {
+            fmt.Printf("Split failed: %s\n", offset)
+            continue
+        }
+
+        x, _ := strconv.ParseInt(xy[0], 10, 32)
+        y, _ := strconv.ParseInt(xy[1], 10, 32)
+        canvas.Set(int(x), int(y), color.Black)
+    }
+
+    file, err := os.Create("drawings/" + id + ".png")
+    if err != nil {
+        panic(err)
+    }
+
+    defer file.Close()
+
+    png.Encode(file, canvas)
+
+    http.Redirect(w, r, "/drawings/"+id+".png", http.StatusFound)
 }
 
 func saveListener(ws *websocket.Conn) {
@@ -45,11 +93,11 @@ func saveListener(ws *websocket.Conn) {
 }
 
 func main() {
-    http.HandleFunc("/", showAction)
-    http.HandleFunc("/drawing", drawingAction)
+    http.HandleFunc("/drawing/", drawingAction)
     http.Handle("/save", websocket.Handler(saveListener))
     http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
-    http.Handle("/drawings/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
+    http.Handle("/drawings/", http.StripPrefix("/drawings/", http.FileServer(http.Dir("drawings"))))
+    http.HandleFunc("/", showAction)
     
     err := http.ListenAndServe(":8080", nil)
     if err != nil {
