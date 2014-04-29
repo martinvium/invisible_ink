@@ -1,8 +1,9 @@
 Invisible Ink
 =============
 
-Small demo that captures mousemove events, sends them through a Websocket to a small Go webservice, which in turn
-renders the coordinates as dots in a PNG.
+Small demo that captures mousemove events, sends them through a Websocket to a small Go webservice that writes the 
+coordinates per canvas to a Cassandra instance. It then requests the image for the History, which is rendered from the
+data stored in Cassandra.
 
 ![Example](/assets/images/example.png?raw=true)
 
