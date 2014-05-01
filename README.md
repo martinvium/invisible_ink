@@ -10,6 +10,7 @@ data stored in Cassandra.
 Installation
 ------------
 
+    CREATE KEYSPACE mykeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
     create table coordinates (id uuid primary key, drawing_id text, x int, y int); 
     create index on coordinates (drawing_id);
 
@@ -19,3 +20,12 @@ Build and Run
     go build && ./invisible_ink
 
 Visit http://127.0.0.1:8080/ in your browser.
+
+Test Installation
+-------------
+
+Before you can run tests you must create a keyspace and tables:
+
+    CREATE KEYSPACE testkeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+    create table coordinates (id uuid primary key, drawing_id text, x int, y int); 
+    create index on coordinates (drawing_id);

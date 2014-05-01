@@ -67,9 +67,9 @@ func saveListener(ws *websocket.Conn, session *gocql.Session) {
 	writer.end()
 }
 
-func getCassandraSession() *gocql.Session {
+func NewCassandraSession(keyspace string) *gocql.Session {
 	cluster := gocql.NewCluster("127.0.0.1")
-	cluster.Keyspace = "mykeyspace"
+	cluster.Keyspace = keyspace
 	cluster.Consistency = gocql.Quorum
 	session, err := cluster.CreateSession()
 	if err != nil {
@@ -80,7 +80,7 @@ func getCassandraSession() *gocql.Session {
 }
 
 func main() {
-	session := getCassandraSession()
+	session := NewCassandraSession("mykeyspace")
 	defer session.Close()
 
 	http.HandleFunc("/drawing/", func(w http.ResponseWriter, r *http.Request) {
