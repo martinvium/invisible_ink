@@ -46,7 +46,7 @@ func drawingAction(w http.ResponseWriter, r *http.Request, session *gocql.Sessio
 }
 
 func saveListener(ws *websocket.Conn, session *gocql.Session) {
-	writer := NewOffsetWriter(session)
+	writer := NewProtocol(session)
 
 	for {
 		var in []byte
@@ -56,8 +56,12 @@ func saveListener(ws *websocket.Conn, session *gocql.Session) {
 			break
 		}
 
-		writer.push(string(in))
-		fmt.Printf("Received: %s\n", string(in))
+		if err := writer.execute(string(in)); err != nil {
+			fmt.Printf("ERROR parsing: %s\n", string(in))
+		} else {
+			fmt.Printf("Received: %s\n", string(in))
+		}
+
 	}
 
 	writer.end()

@@ -10,37 +10,35 @@ import (
 var startRegex = regexp.MustCompile("^STARTDRAW: ([a-zA-Z0-9]+)$")
 var offsetRegex = regexp.MustCompile("^([0-9]+),([0-9]+)$")
 
-type OffsetWriter struct {
+type Protocol struct {
 	session    *gocql.Session
 	drawing_id string
 }
 
-func NewOffsetWriter(session *gocql.Session) *OffsetWriter {
-	f := OffsetWriter{session, ""}
+func NewProtocol(session *gocql.Session) *Protocol {
+	f := Protocol{session, ""}
 	return &f
 }
 
-func (self *OffsetWriter) start(id string) {
+func (self *Protocol) start(id string) {
 	self.drawing_id = id
 }
 
-func (self *OffsetWriter) end() {
+func (self *Protocol) end() {
 	self.drawing_id = ""
 }
 
-func (self *OffsetWriter) write(x string, y string) {
+func (self *Protocol) write(x string, y string) error {
 	ix, _ := strconv.ParseInt(x, 10, 32)
 	iy, _ := strconv.ParseInt(y, 10, 32)
 
 	coord := NewCoordinate(self.session, self.drawing_id, int(ix), int(iy))
-	if err := coord.create(); err != nil {
-		panic(err)
-	}
+	return coord.create()
 }
 
-func (self *OffsetWriter) push(msg string) {
+func (self *Protocol) execute(msg string) error {
 	if m := offsetRegex.FindStringSubmatch(msg); m != nil {
-		self.write(m[1], m[2])
+		return self.write(m[1], m[2])
 	} else if m := startRegex.FindStringSubmatch(msg); m != nil {
 		self.start(m[1])
 	} else if msg == "ENDDRAW" {
@@ -48,4 +46,6 @@ func (self *OffsetWriter) push(msg string) {
 	} else {
 		fmt.Printf("Invalid command pushed: %s\n", msg)
 	}
+
+	return nil
 }
