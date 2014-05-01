@@ -6,11 +6,7 @@ import (
 	"fmt"
 	"github.com/gocql/gocql"
 	"html/template"
-	"image"
-	"image/color"
-	"image/png"
 	"net/http"
-	"os"
 	"regexp"
 )
 
@@ -39,28 +35,14 @@ func drawingAction(w http.ResponseWriter, r *http.Request, session *gocql.Sessio
 		return
 	}
 
-	canvas := image.NewRGBA(image.Rect(0, 0, 300, 300))
-
-	var x, y int
-	iter := FindAllCoordinatesByDrawingId(session, id)
-	for iter.Scan(&x, &y) {
-		canvas.Set(x, y, color.Black)
-	}
-
-	if err := iter.Close(); err != nil {
-		panic(err)
-	}
-
-	file, err := os.Create("drawings/" + id + ".png")
+	image := NewImage(session, id)
+	fullpath, err := image.create()
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	defer file.Close()
-
-	png.Encode(file, canvas)
-
-	http.Redirect(w, r, "/drawings/"+id+".png", http.StatusFound)
+	http.Redirect(w, r, "/"+fullpath, http.StatusFound)
 }
 
 func saveListener(ws *websocket.Conn, session *gocql.Session) {
