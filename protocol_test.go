@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestExecuteStartDraw(t *testing.T) {
+func TestProtocolExecuteStartDraw(t *testing.T) {
 	session := NewCassandraSession("testkeyspace")
 	defer session.Close()
 	protocol := NewProtocol(session)
@@ -14,7 +14,7 @@ func TestExecuteStartDraw(t *testing.T) {
 	AssertEqual(t, "exampledrawingid", protocol.drawing_id)
 }
 
-func TestExecuteEndDrawClearsId(t *testing.T) {
+func TestProtocolExecuteEndDrawClearsId(t *testing.T) {
 	session := NewCassandraSession("testkeyspace")
 	defer session.Close()
 	protocol := NewProtocol(session)
@@ -25,7 +25,7 @@ func TestExecuteEndDrawClearsId(t *testing.T) {
 	AssertEqual(t, "", protocol.drawing_id)
 }
 
-func TestExecuteStartAndCoordinates(t *testing.T) {
+func TestProtocolExecuteStartAndCoordinates(t *testing.T) {
 	session := NewCassandraSession("testkeyspace")
 	defer session.Close()
 	protocol := NewProtocol(session)
