@@ -5,10 +5,10 @@ import (
 )
 
 type Coordinate struct {
-	session    *gocql.Session
-	uuid       gocql.UUID
-	drawing_id string
-	x, y       int
+	session   *gocql.Session
+	uuid      gocql.UUID
+	drawingId string
+	x, y      int
 }
 
 func NewCoordinate(session *gocql.Session, drawingId string, x int, y int) *Coordinate {
@@ -27,7 +27,7 @@ func (self *Coordinate) create() error {
 	sql := `INSERT INTO coordinates (id, drawing_id, x, y) VALUES (?, ?, ?, ?)`
 	return self.session.Query(sql,
 		self.uuid,
-		self.drawing_id,
+		self.drawingId,
 		self.x,
 		self.y).Exec()
 }
