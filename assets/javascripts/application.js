@@ -14,15 +14,17 @@ $(document).ready(function() {
       draw = false;
       ws.send('ENDDRAW');
       var url = '/drawing/' + id;
-      // var link = '<li><a href="' + url + '">' + id + '</a></li>';
       var img = '<div class="image"><img src="' + url + '"/></div>';
       $(".log").prepend(img);
     }
   });
 
-  $(".canvas").mousemove(function(event) {
+  $(".canvas").mousemove(function(e) {
     if(draw) {
-      var msg = event.pageX + "," + event.pageY;
+      var offset = $(this).offset();
+      var relX = e.pageX - offset.left;
+      var relY = e.pageY - offset.top;
+      var msg = relX + "," + relY;
       ws.send(msg);
     }
   });
