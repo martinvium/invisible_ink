@@ -46,7 +46,7 @@ func drawingAction(w http.ResponseWriter, r *http.Request, session *gocql.Sessio
 }
 
 func saveListener(ws *websocket.Conn, session *gocql.Session) {
-	writer := NewProtocol(session)
+	proto := NewProtocol(session)
 
 	for {
 		var in []byte
@@ -56,15 +56,18 @@ func saveListener(ws *websocket.Conn, session *gocql.Session) {
 			break
 		}
 
-		if err := writer.execute(string(in)); err != nil {
-			fmt.Printf("ERROR parsing: %s\n", string(in))
-		} else {
-			fmt.Printf("Received: %s\n", string(in))
-		}
-
+		go executeProtocol(proto, in)
 	}
 
-	writer.end()
+	proto.end()
+}
+
+func executeProtocol(proto *Protocol, in []byte) {
+	if err := proto.execute(string(in)); err != nil {
+		fmt.Printf("ERROR parsing: %s\n", string(in))
+	} else {
+		fmt.Printf("Received: %s\n", string(in))
+	}
 }
 
 func NewCassandraSession(keyspace string) *gocql.Session {
