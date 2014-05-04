@@ -11,8 +11,14 @@ Installation
 ------------
 
     CREATE KEYSPACE mykeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-    create table coordinates (id uuid primary key, drawing_id text, x int, y int); 
-    create index on coordinates (drawing_id);
+    
+    CREATE TABLE coordinates (
+      drawing_id text,
+      timestamp timeuuid,
+      x int, 
+      y int,
+      PRIMARY KEY (drawing_id, timestamp)
+    );
 
 Build and Run
 -------------
@@ -27,5 +33,5 @@ Test Installation
 Before you can run tests you must create a keyspace and tables:
 
     CREATE KEYSPACE testkeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-    create table coordinates (id uuid primary key, drawing_id text, x int, y int); 
-    create index on coordinates (drawing_id);
+
+Now run the CREATE TABLE statement from installation.

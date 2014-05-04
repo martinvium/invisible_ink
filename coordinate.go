@@ -6,13 +6,13 @@ import (
 
 type Coordinate struct {
 	session   *gocql.Session
-	uuid      gocql.UUID
 	drawingId string
+	timestamp gocql.UUID
 	x, y      int
 }
 
 func NewCoordinate(session *gocql.Session, drawingId string, x int, y int) *Coordinate {
-	return &Coordinate{session, gocql.TimeUUID(), drawingId, x, y}
+	return &Coordinate{session, drawingId, gocql.TimeUUID(), x, y}
 }
 
 func FindAllCoordinatesByDrawingId(session *gocql.Session, id string) *gocql.Iter {
@@ -24,10 +24,10 @@ func DeleteAllCoordinates(session *gocql.Session) {
 }
 
 func (self *Coordinate) create() error {
-	sql := `INSERT INTO coordinates (id, drawing_id, x, y) VALUES (?, ?, ?, ?)`
+	sql := `INSERT INTO coordinates (drawing_id, timestamp, x, y) VALUES (?, ?, ?, ?)`
 	return self.session.Query(sql,
-		self.uuid,
 		self.drawingId,
+		self.timestamp,
 		self.x,
 		self.y).Exec()
 }
