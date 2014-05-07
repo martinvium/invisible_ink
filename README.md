@@ -5,6 +5,8 @@ Small demo that captures mousemove events, sends them through a Websocket to a s
 coordinates per canvas to a Cassandra instance. It then requests the image for the History, which is rendered from the
 data stored in Cassandra.
 
+[![Build Status](https://travis-ci.org/martinvium/invisible_ink.png)](https://travis-ci.org/martinvium/invisible_ink)
+
 ![Example](/assets/images/example.png?raw=true)
 
 Installation
