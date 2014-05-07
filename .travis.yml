@@ -2,6 +2,8 @@ language: go
 go:
   - 1.2
   - tip
+before_script:
+  - cqlsh -f test_setup.cql
 script:
   - go test
   - go build
