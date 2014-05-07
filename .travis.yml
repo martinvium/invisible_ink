@@ -1,14 +1,8 @@
 language: go
 go:
-  - 1.2
   - tip
-before_script:
-  - cqlsh -f test_setup.cql
 script:
-  - go test
   - go build
 install:
   - go get code.google.com/p/go.net/websocket
   - go get github.com/gocql/gocql
-services:
-  - cassandra
